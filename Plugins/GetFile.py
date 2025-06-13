@@ -9,7 +9,7 @@ from bson.errors import InvalidId
 import asyncio
 
 @bot.on_message(filters.command("start") & filters.regex(r"^/start\s(.+)"))
-@subscription_required
+@subscription_required()
 async def start_link_restore(client: Client, message: Message):
     user = message.from_user
     user_id = user.id
