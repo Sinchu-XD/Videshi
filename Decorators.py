@@ -128,9 +128,8 @@ async def is_sudo(message: Message):
     sudoers = await get_sudo_list()
     return message.from_user.id in sudoers
 
-owner_or_sudo = filters.create(
-    async def _(client, message):
-        user_id = message.from_user.id
-        sudoers = await get_sudo_list()
-        return user_id == Config.OWNER_ID or user_id in sudoers
-    )
+owner_or_sudo = filters.create(async def _(client, message):
+    user_id = message.from_user.id
+    sudoers = await get_sudo_list()
+    return user_id == Config.OWNER_ID or user_id in sudoers
+)
