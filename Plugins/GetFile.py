@@ -11,7 +11,7 @@ import asyncio
 @subscription_required()
 async def start_link_restore(client: Client, message: Message):
     user = message.from_user
-    file_ref_id = message.text.split(" ", 1)[1]
+    file_ref_id = message.text.split(" ", 1)[1].strip()
     await add_user(user.id, user.first_name, user.username)
 
     data = None
@@ -30,16 +30,17 @@ async def start_link_restore(client: Client, message: Message):
         return await message.reply_text("❌ File not found or invalid link.")
 
     if "files" in data:
-        files = data["files"]
+        files = data.get("files", [])
+        if not files:
+            return await message.reply_text("❌ No files found in this link.")
+
         await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one...")
 
         for idx, file in enumerate(files, start=1):
-            print(f"Processing file {idx}: {file}")  # ✅ Debug: see what file is being processed
+            print(f"Processing file {idx}: {file}")
 
             try:
                 original_msg = await bot.get_messages(file["chat_id"], file["message_id"])
-                print(f"Got original message for file {idx}: {original_msg}")
-
                 sent = None
 
                 if original_msg.document:
@@ -64,18 +65,18 @@ async def start_link_restore(client: Client, message: Message):
                         protect_content=True
                     )
                 else:
-                    print(f"[SKIP] File {idx} has no valid media.")
                     await bot.send_message(
                         chat_id=message.chat.id,
                         text=f"❌ File {idx} not found or invalid."
                     )
                     continue
 
+                # Auto-delete this file after 10 min
                 await asyncio.sleep(600)
                 if sent:
                     await sent.delete()
 
-                await asyncio.sleep(1)
+                await asyncio.sleep(1)  # short pause between files
 
             except Exception as e:
                 print(f"[RESTORE ERROR] File {idx}: {e}")
@@ -114,3 +115,4 @@ async def start_link_restore(client: Client, message: Message):
         except Exception as e:
             print(f"[RESTORE ERROR] Single file: {e}")
             await message.reply_text("⚠️ Failed to send the file.")
+            
