@@ -93,12 +93,12 @@ async def save_bulk_file(user_id: int, files: list) -> str:
         "files": files,
         "time": datetime.utcnow()
     }
-    insert = files_col.insert_one(bulk_doc)
+    insert = bulk_files_col.insert_one(bulk_doc)
     return str(insert.inserted_id)
-    
+
 async def get_bulk_file_by_id(ref_id: str):
     return bulk_files_col.find_one({"_id": ObjectId(ref_id)})
-
+    
 async def set_force_check(value: bool):
     settings_collection.update_one(
         {"_id": "force_check"},
