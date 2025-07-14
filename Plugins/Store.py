@@ -3,12 +3,16 @@ from pyrogram.types import Message
 from Config import Config
 from Bot import bot
 from Database import save_file
-from Decorators import owner_or_sudo
 from datetime import datetime
 
 MAX_FILE_SIZE_MB = 4096  # 4GB limit
 
-@bot.on_message(filters.private & filters.media & owner_or_sudo)
+async def is_admin(uid: int) -> bool:
+    sudo_users = await get_sudo_list()
+    return uid == Config.OWNER_ID or uid in sudo_users
+
+
+@bot.on_message(filters.private & filters.media)
 async def handle_file(client: Client, message: Message):
     media = message.document or message.video or message.audio or message.photo
 
