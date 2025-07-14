@@ -15,10 +15,15 @@ async def check_subscription(client: Client, user_id: int) -> bool:
         try:
             member = await client.get_chat_member(channel, user_id)
             if member.status not in ("member", "administrator", "creator"):
+                # The user is not a member or has another status
                 return False
-        except:
+        except Exception as e:
+            # Log the exception for better error tracking
+            print(f"Error checking subscription for channel {channel}: {e}")
             return False
+
     return True
+
 
 async def send_file_by_ref_id(client: Client, chat_id: int, file_ref_id: str):
     data = await get_file_by_id(file_ref_id)
