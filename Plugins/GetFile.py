@@ -34,8 +34,12 @@ async def start_link_restore(client: Client, message: Message):
         await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one...")
 
         for idx, file in enumerate(files, start=1):
+            print(f"Processing file {idx}: {file}")  # ✅ Debug: see what file is being processed
+
             try:
                 original_msg = await bot.get_messages(file["chat_id"], file["message_id"])
+                print(f"Got original message for file {idx}: {original_msg}")
+
                 sent = None
 
                 if original_msg.document:
@@ -60,6 +64,7 @@ async def start_link_restore(client: Client, message: Message):
                         protect_content=True
                     )
                 else:
+                    print(f"[SKIP] File {idx} has no valid media.")
                     await bot.send_message(
                         chat_id=message.chat.id,
                         text=f"❌ File {idx} not found or invalid."
@@ -76,7 +81,7 @@ async def start_link_restore(client: Client, message: Message):
                 print(f"[RESTORE ERROR] File {idx}: {e}")
                 await bot.send_message(
                     chat_id=message.chat.id,
-                    text=f"⚠️ Failed to send file {idx}."
+                    text=f"⚠️ Failed to send file {idx}. {e}"
                 )
 
     else:
