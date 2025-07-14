@@ -12,14 +12,17 @@ import asyncio
 async def start_link_restore(client: Client, message: Message):
     user = message.from_user
     file_ref_id = message.text.split(" ", 1)[1].strip()
+
     await add_user(user.id, user.first_name, user.username)
 
+    # Try single file first
     data = None
     try:
         data = await get_file_by_id(file_ref_id)
     except InvalidId:
         pass
 
+    # If not found, try bulk
     if not data:
         try:
             data = await get_bulk_file_by_id(file_ref_id)
@@ -29,16 +32,19 @@ async def start_link_restore(client: Client, message: Message):
     if not data:
         return await message.reply_text("❌ File not found or invalid link.")
 
-    if "files" in data:
-        files = data.get("files", [])
-        if not files:
-            return await message.reply_text("❌ No files found in this link.")
+    # Function to auto-delete sent message
+    async def auto_delete(sent_msg, delay=600):
+        await asyncio.sleep(delay)
+        try:
+            await sent_msg.delete()
+        except Exception as e:
+            print(f"[AUTO DELETE ERROR] {e}")
 
+    if "files" in data:
+        files = data["files"]
         await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one...")
 
         for idx, file in enumerate(files, start=1):
-            print(f"Processing file {idx}: {file}")
-
             try:
                 original_msg = await bot.get_messages(file["chat_id"], file["message_id"])
                 sent = None
@@ -65,27 +71,21 @@ async def start_link_restore(client: Client, message: Message):
                         protect_content=True
                     )
                 else:
-                    await bot.send_message(
-                        chat_id=message.chat.id,
-                        text=f"❌ File {idx} not found or invalid."
-                    )
+                    await message.reply_text(f"❌ File {idx} has no valid media.")
                     continue
 
-                # Auto-delete this file after 10 min
-                await asyncio.sleep(600)
-                if sent:
-                    await sent.delete()
+                # Start auto-delete in background
+                asyncio.create_task(auto_delete(sent, 600))
 
-                await asyncio.sleep(1)  # short pause between files
+                # Small pause to avoid FloodWait
+                await asyncio.sleep(1)
 
             except Exception as e:
                 print(f"[RESTORE ERROR] File {idx}: {e}")
-                await bot.send_message(
-                    chat_id=message.chat.id,
-                    text=f"⚠️ Failed to send file {idx}. {e}"
-                )
+                await message.reply_text(f"⚠️ Failed to send file {idx}. {e}")
 
     else:
+        # Single file fallback
         try:
             original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
             sent = None
@@ -106,11 +106,9 @@ async def start_link_restore(client: Client, message: Message):
                     protect_content=True
                 )
             else:
-                return await message.reply_text("❌ File not found.")
+                return await message.reply_text("❌ File not found or invalid media.")
 
-            await asyncio.sleep(600)
-            if sent:
-                await sent.delete()
+            asyncio.create_task(auto_delete(sent, 600))
 
         except Exception as e:
             print(f"[RESTORE ERROR] Single file: {e}")
