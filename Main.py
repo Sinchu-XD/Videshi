@@ -1,20 +1,25 @@
 import os
 import importlib
-import asyncio
 from Bot import bot
 
 plugin_folder = "Plugins"
 
-async def load_plugins():
+# Function to load plugins
+def load_plugins():
     for filename in os.listdir(plugin_folder):
         if filename.endswith(".py"):
             importlib.import_module(f"{plugin_folder}.{filename[:-3]}")
 
-async def init():
+# Initialize function to load plugins and run the bot
+def init():
     print(">> Bot Starting...")
-    await load_plugins()
-    await bot.run()
 
+    # Load plugins
+    load_plugins()
+
+    # Run the bot (Let Pyrogram manage the event loop)
+    bot.run()
+
+# Main entry point
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(init())
+    init()  # Run everything without manually controlling the event loop
