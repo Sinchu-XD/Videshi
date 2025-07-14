@@ -15,10 +15,8 @@ async def check_subscription(client: Client, user_id: int) -> bool:
         try:
             member = await client.get_chat_member(channel, user_id)
             if member.status not in ("member", "administrator", "creator"):
-                # The user is not a member or has another status
                 return False
         except Exception as e:
-            # Log the exception for better error tracking
             print(f"Error checking subscription for channel {channel}: {e}")
             return False
 
@@ -42,10 +40,12 @@ async def send_file_by_ref_id(client: Client, chat_id: int, file_ref_id: str):
         await asyncio.sleep(1200)
         try:
             await sent.delete()
-        except:
+        except Exception as e:
+            print(f"Error deleting sent file: {e}")
             pass
-    except:
-        await client.send_message(chat_id, "⚠️ Failed to send the file. Try again later.")
+    except Exception as e:
+        await client.send_message(chat_id, f"⚠️ Failed to send the file. Error: {e}")
+
 
 def subscription_required():
     def decorator(func):
@@ -76,6 +76,7 @@ def subscription_required():
             )
         return wrapper
     return decorator
+
 
 @bot.on_callback_query(filters.regex(r"check_join_(.+)"))
 async def recheck_subscription(client: Client, callback_query: CallbackQuery):
@@ -112,22 +113,17 @@ async def recheck_subscription(client: Client, callback_query: CallbackQuery):
 
     try:
         await callback_query.message.delete()
-    except:
-        pass
+    except Exception as e:
+        print(f"Error deleting callback message: {e}")
+
 
 async def delete_messages(user_message: Message, bot_message: Message, delay=5):
     await asyncio.sleep(delay)
     try:
         await user_message.delete()
-    except:
-        pass
+    except Exception as e:
+        print(f"Error deleting user message: {e}")
     try:
         await bot_message.delete()
-    except:
-        pass
-
-async def is_sudo(client, message, update):
-    sudoers = await get_sudo_list()
-    return message.from_user.id == Config.OWNER_ID or message.from_user.id in sudoers
-
-owner_or_sudo = filters.create(is_sudo)
+    except Exception as e:
+        print(f"Error deleting bot message: {e}")
