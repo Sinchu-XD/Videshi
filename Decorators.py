@@ -121,8 +121,8 @@ async def delete_messages(user_message: Message, bot_message: Message, delay=5):
     except:
         pass
 
-async def is_sudo(message: Message):
-    sudoers = await get_sudo_list()  # Assume this function gets the list of sudo users
+async def is_sudo(client, message):
+    sudoers = await get_sudo_list()
     return message.from_user.id == Config.OWNER_ID or message.from_user.id in sudoers
 
 owner_or_sudo = filters.create(is_sudo)
