@@ -31,31 +31,39 @@ async def start_link_restore(client: Client, message: Message):
 
     if "files" in data:
         files = data["files"]
-        await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one..")
+        await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one...")
 
         for idx, file in enumerate(files, start=1):
             try:
                 original_msg = await bot.get_messages(file["chat_id"], file["message_id"])
-
                 sent = None
 
                 if original_msg.document:
-                    sent = await message.reply_document(
+                    sent = await bot.send_document(
+                        chat_id=message.chat.id,
                         document=original_msg.document.file_id,
+                        caption=f"📦 File {idx}/{len(files)}",
                         protect_content=True
                     )
                 elif original_msg.video:
-                    sent = await message.reply_video(
+                    sent = await bot.send_video(
+                        chat_id=message.chat.id,
                         video=original_msg.video.file_id,
+                        caption=f"📦 File {idx}/{len(files)}",
                         protect_content=True
                     )
                 elif original_msg.photo:
-                    sent = await message.reply_photo(
+                    sent = await bot.send_photo(
+                        chat_id=message.chat.id,
                         photo=original_msg.photo.file_id,
+                        caption=f"📦 File {idx}/{len(files)}",
                         protect_content=True
                     )
                 else:
-                    await message.reply_text(f"❌ File {idx} not found or invalid.")
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=f"❌ File {idx} not found or invalid."
+                    )
                     continue
 
                 await asyncio.sleep(600)
@@ -66,7 +74,10 @@ async def start_link_restore(client: Client, message: Message):
 
             except Exception as e:
                 print(f"[RESTORE ERROR] File {idx}: {e}")
-                await message.reply_text(f"⚠️ Failed to send file {idx}.")
+                await bot.send_message(
+                    chat_id=message.chat.id,
+                    text=f"⚠️ Failed to send file {idx}."
+                )
 
     else:
         try:
