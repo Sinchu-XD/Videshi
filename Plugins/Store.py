@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Config import Config
 from Bot import bot
-from Database import save_file, get_sudo_list
+from Database import save_file
 from datetime import datetime
 
 MAX_FILE_SIZE_MB = 4096  # 4GB limit
@@ -11,9 +11,12 @@ async def is_admin(uid: int) -> bool:
     sudo_users = await get_sudo_list()
     return uid == Config.OWNER_ID or uid in sudo_users
 
-
 @bot.on_message(filters.private & filters.media)
 async def handle_file(client: Client, message: Message):
+    # Check if the user is an admin before proceeding
+    if not await is_admin(message.from_user.id):
+        return await message.reply_text("❌ You are not authorized to save files.")
+
     media = message.document or message.video or message.audio or message.photo
 
     if not media:
@@ -70,4 +73,3 @@ async def handle_file(client: Client, message: Message):
         )
     except Exception as e:
         print(f"[LOG ERROR] Failed to log upload: {e}")
-      
