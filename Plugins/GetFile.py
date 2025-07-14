@@ -49,15 +49,15 @@ async def start_link_restore(client: Client, message: Message):
 
     # Try to get original message and send the file
     try:
-        print(f"[DEBUG] Trying to get original message: chat_id={data['chat_id']}, message_id={data['message_id']}")
+      #  print(f"[DEBUG] Trying to get original message: chat_id={data['chat_id']}, message_id={data['message_id']}")
         original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
-        print(f"[DEBUG] original_msg: {original_msg}")
+       # print(f"[DEBUG] original_msg: {original_msg}")
 
         # Check what media is present
         doc = original_msg.document
         vid = original_msg.video
         photo = original_msg.photo
-        print(f"[DEBUG] document={doc}, video={vid}, photo={photo}")
+     #   print(f"[DEBUG] document={doc}, video={vid}, photo={photo}")
 
         sent = None
 
@@ -80,7 +80,7 @@ async def start_link_restore(client: Client, message: Message):
                 protect_content=True
             )
         else:
-            print("[ERROR] No valid media found in original message.")
+         #   print("[ERROR] No valid media found in original message.")
             return await message.reply_text("❌ File not found or deleted.")
 
         # Auto-delete the sent message after 10 min
