@@ -17,13 +17,11 @@ async def start_link_restore(client: Client, message: Message):
 
     await add_user(user.id, user.first_name, user.username)
 
-    # Try single file first
     try:
         data = await get_file_by_id(file_ref_id)
     except InvalidId:
         data = None
 
-    # If not found, try bulk album
     if not data:
         try:
             data = await get_bulk_file_by_id(file_ref_id)
@@ -34,25 +32,9 @@ async def start_link_restore(client: Client, message: Message):
         try:
             return await message.reply_text("❌ File not found or expired link.")
         except UserIsBlocked:
-            print(f"[BLOCKED] Can't reply to {user_id}: User has blocked the bot.")
             return
 
-    # Single file restore
     if "chat_id" in data:
-        # Log
-        try:
-            mention = f"[{user.first_name}](tg://user?id={user.id})"
-            await bot.send_message(
-                Config.LOG_CHANNEL_ID,
-                f"#RESTORE\n👤 **User:** {mention}\n"
-                f"📁 **Requested File ID:** `{file_ref_id}`\n"
-                f"📦 **Type:** {data['file_type']}",
-                parse_mode="md"
-            )
-        except Exception as e:
-            print(f"[LOG ERROR] {e}")
-
-        # Get and send
         try:
             original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
             doc = original_msg.document
@@ -82,44 +64,18 @@ async def start_link_restore(client: Client, message: Message):
             else:
                 return await message.reply_text("❌ File not found or deleted.")
 
-            # Auto-delete
             await asyncio.sleep(600)
             try:
                 await sent.delete()
-            except Exception as e:
-                print(f"[AUTO DELETE ERROR] {e}")
+            except:
+                pass
 
-        except UserIsBlocked:
-            print(f"[BLOCKED] Cannot send file to {user_id}: User has blocked the bot.")
         except Exception as e:
-            print(f"[RESTORE ERROR] {e}")
-            try:
-                await message.reply_text("⚠️ Failed to send the file. Try again later.")
-            except UserIsBlocked:
-                print(f"[BLOCKED] Can't reply to {user_id}: User has blocked the bot.")
+            await message.reply_text("⚠️ Failed to send the file.")
 
-    # Bulk album restore
     elif "files" in data:
         files = data["files"]
-        count = len(files)
-
-        # Log
-        try:
-            mention = f"[{user.first_name}](tg://user?id={user.id})"
-            await bot.send_message(
-                Config.LOG_CHANNEL_ID,
-                f"#BULK_RESTORE\n👤 **User:** {mention}\n"
-                f"📁 **Requested Bulk ID:** `{file_ref_id}`\n"
-                f"📦 **Files Count:** {count}",
-                parse_mode="md"
-            )
-        except Exception as e:
-            print(f"[LOG ERROR] {e}")
-
-        # Notify user
-        await message.reply_text(
-            f"📦 Found {count} files. Sending them one by one..."
-        )
+        await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one...")
 
         for file in files:
             try:
@@ -146,20 +102,16 @@ async def start_link_restore(client: Client, message: Message):
                         protect_content=True
                     )
                 else:
-                    await message.reply_text("❌ One file in album not found.")
+                    await message.reply_text("❌ One file not found.")
 
-                # Optional: auto-delete each file after 10 min
                 await asyncio.sleep(600)
                 try:
                     if sent:
                         await sent.delete()
-                except Exception as e:
-                    print(f"[AUTO DELETE ERROR] {e}")
+                except:
+                    pass
 
-                # Short pause to avoid flood
                 await asyncio.sleep(1)
 
             except Exception as e:
-                print(f"[BULK RESTORE ERROR] {e}")
                 continue
-
