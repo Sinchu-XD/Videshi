@@ -7,6 +7,7 @@ from collections import defaultdict
 import asyncio
 
 media_groups = defaultdict(list)
+media_group_tasks = {}
 
 MAX_FILE_SIZE_MB = 4096  # 4GB
 
@@ -47,20 +48,38 @@ async def handle_bulk_upload(client: Client, message: Message):
             "file_type": file_type
         })
 
-        await asyncio.sleep(2)
+        # If no task yet, start a delayed save task
+        if mgid not in media_group_tasks:
+            async def delayed_save():
+                await asyncio.sleep(5)  # wait for user to finish sending album
+                files = media_groups.pop(mgid, [])
+                if len(files) >= 2:
+                    ref_id = await save_bulk_file(
+                        user_id=message.from_user.id,
+                        media_group_id=mgid,
+                        files=files
+                    )
+                    link = f"https://t.me/{Config.BOT_USERNAME}?start={ref_id}"
+                    await message.reply_text(
+                        f"✅ Bulk files saved!\n\n🔗 Link: {link}\n📦 Files: {len(files)}"
+                    )
+                else:
+                    # If only one file, save as single
+                    if files:
+                        file = files[0]
+                        ref_id = await save_file(
+                            user_id=message.from_user.id,
+                            chat_id=file["chat_id"],
+                            message_id=file["message_id"],
+                            file_type=file["file_type"]
+                        )
+                        link = f"https://t.me/{Config.BOT_USERNAME}?start={ref_id}"
+                        await message.reply_text(
+                            f"✅ File saved!\n\n🔗 Link: {link}"
+                        )
+                media_group_tasks.pop(mgid, None)
 
-        files = media_groups.get(mgid)
-        if files and len(files) >= 2:
-            ref_id = await save_bulk_file(
-                user_id=message.from_user.id,
-                media_group_id=mgid,
-                files=files
-            )
-            link = f"https://t.me/{Config.BOT_USERNAME}?start={ref_id}"
-            await message.reply_text(
-                f"✅ Bulk files saved!\n\n🔗 Link: {link}\n📦 Files: {len(files)}"
-            )
-            media_groups.pop(mgid, None)
+            media_group_tasks[mgid] = asyncio.create_task(delayed_save())
 
     else:
         ref_id = await save_file(
