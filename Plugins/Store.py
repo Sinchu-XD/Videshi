@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Config import Config
 from Bot import bot
-from Database import save_file
+from Database import save_file, get_sudo_list
 from datetime import datetime
 
 MAX_FILE_SIZE_MB = 4096  # 4GB limit
