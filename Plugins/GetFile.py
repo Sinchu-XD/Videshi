@@ -17,6 +17,7 @@ async def start_link_restore(client: Client, message: Message):
 
     await add_user(user.id, user.first_name, user.username)
 
+    # Get file data from DB
     try:
         data = await get_file_by_id(file_ref_id)
     except InvalidId:
@@ -33,6 +34,7 @@ async def start_link_restore(client: Client, message: Message):
             print(f"[BLOCKED] Can't reply to {user_id}: User has blocked the bot.")
             return
 
+    # Log request to your log channel
     try:
         mention = f"[{user.first_name}](tg://user?id={user.id})"
         await bot.send_message(
@@ -45,14 +47,43 @@ async def start_link_restore(client: Client, message: Message):
     except Exception as e:
         print(f"[LOG ERROR] {e}")
 
+    # Try to get original message and send the file
     try:
+        print(f"[DEBUG] Trying to get original message: chat_id={data['chat_id']}, message_id={data['message_id']}")
         original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
-        sent = await message.reply_cached_media(
-            media=original_msg.document or original_msg.video or original_msg.photo,
-            caption="📂 Sending your file...\n\nThis file will auto-delete in 10 minutes.",
-            protect_content=True
-        )
+        print(f"[DEBUG] original_msg: {original_msg}")
 
+        # Check what media is present
+        doc = original_msg.document
+        vid = original_msg.video
+        photo = original_msg.photo
+        print(f"[DEBUG] document={doc}, video={vid}, photo={photo}")
+
+        sent = None
+
+        if doc:
+            sent = await message.reply_document(
+                document=doc.file_id,
+                caption="📂 Sending your file...\n\nThis file will auto-delete in 10 minutes.",
+                protect_content=True
+            )
+        elif vid:
+            sent = await message.reply_video(
+                video=vid.file_id,
+                caption="📂 Sending your file...\n\nThis file will auto-delete in 10 minutes.",
+                protect_content=True
+            )
+        elif photo:
+            sent = await message.reply_photo(
+                photo=photo.file_id,
+                caption="📂 Sending your file...\n\nThis file will auto-delete in 10 minutes.",
+                protect_content=True
+            )
+        else:
+            print("[ERROR] No valid media found in original message.")
+            return await message.reply_text("❌ File not found or deleted.")
+
+        # Auto-delete the sent message after 10 min
         await asyncio.sleep(600)
         try:
             await sent.delete()
@@ -67,4 +98,3 @@ async def start_link_restore(client: Client, message: Message):
             await message.reply_text("⚠️ Failed to send the file. Try again later.")
         except UserIsBlocked:
             print(f"[BLOCKED] Can't reply to {user_id}: User has blocked the bot.")
-          
