@@ -32,63 +32,69 @@ async def start_link_restore(client: Client, message: Message):
     if "files" in data:
         files = data["files"]
         await message.reply_text(f"📦 Found {len(files)} files. Sending them one by one..")
-        for file in files:
+
+        for idx, file in enumerate(files, start=1):
             try:
-                orig = await bot.get_messages(file["chat_id"], file["message_id"])
+                original_msg = await bot.get_messages(file["chat_id"], file["message_id"])
+
                 sent = None
 
-                if orig.document:
+                if original_msg.document:
                     sent = await message.reply_document(
-                        document=orig.document.file_id,
+                        document=original_msg.document.file_id,
                         protect_content=True
                     )
-                elif orig.video:
+                elif original_msg.video:
                     sent = await message.reply_video(
-                        video=orig.video.file_id,
+                        video=original_msg.video.file_id,
                         protect_content=True
                     )
-                elif orig.photo:
+                elif original_msg.photo:
                     sent = await message.reply_photo(
-                        photo=orig.photo.file_id,
+                        photo=original_msg.photo.file_id,
                         protect_content=True
                     )
+                else:
+                    await message.reply_text(f"❌ File {idx} not found or invalid.")
+                    continue
 
-                await asyncio.sleep(600)  # 10 min auto delete
+                await asyncio.sleep(600)
                 if sent:
                     await sent.delete()
 
-                await asyncio.sleep(1)  # tiny delay between files
+                await asyncio.sleep(1)
 
             except Exception as e:
-                print(f"[RESTORE ERROR] {e}")
-                continue
+                print(f"[RESTORE ERROR] File {idx}: {e}")
+                await message.reply_text(f"⚠️ Failed to send file {idx}.")
 
     else:
         try:
-            orig = await bot.get_messages(data["chat_id"], data["message_id"])
+            original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
             sent = None
 
-            if orig.document:
+            if original_msg.document:
                 sent = await message.reply_document(
-                    document=orig.document.file_id,
+                    document=original_msg.document.file_id,
                     protect_content=True
                 )
-            elif orig.video:
+            elif original_msg.video:
                 sent = await message.reply_video(
-                    video=orig.video.file_id,
+                    video=original_msg.video.file_id,
                     protect_content=True
                 )
-            elif orig.photo:
+            elif original_msg.photo:
                 sent = await message.reply_photo(
-                    photo=orig.photo.file_id,
+                    photo=original_msg.photo.file_id,
                     protect_content=True
                 )
+            else:
+                return await message.reply_text("❌ File not found.")
 
             await asyncio.sleep(600)
             if sent:
                 await sent.delete()
 
         except Exception as e:
-            print(f"[RESTORE ERROR] {e}")
+            print(f"[RESTORE ERROR] Single file: {e}")
             await message.reply_text("⚠️ Failed to send the file.")
-            
