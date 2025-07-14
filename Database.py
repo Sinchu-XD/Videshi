@@ -87,14 +87,13 @@ async def get_file_by_id(file_id: str):
     return files_col.find_one({"_id": ObjectId(file_id)})
 
 # ✅ NEW: Save a bulk album
-async def save_bulk_file(user_id: int, media_group_id: str, files: list):
-    doc = {
+async def save_bulk_file(user_id: int, files: list) -> str:
+    bulk_doc = {
         "user_id": user_id,
-        "media_group_id": media_group_id,
         "files": files,
         "time": datetime.utcnow()
     }
-    insert = bulk_files_col.insert_one(doc)
+    insert = files_col.insert_one(bulk_doc)
     return str(insert.inserted_id)
     
 async def get_bulk_file_by_id(ref_id: str):
