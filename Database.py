@@ -14,6 +14,9 @@ files_col = db.files
 config_col = db.config
 blocked_col = db.blocked_users
 
+# ✅ NEW bulk files collection
+bulk_files_col = db.bulk_files
+
 async def add_user(user_id: int, first_name: str, username: str = None):
     if not users_collection.find_one({"user_id": user_id}):
         users_collection.insert_one({
@@ -83,6 +86,20 @@ async def save_file(user_id: int, chat_id: int, message_id: int, file_type: str)
 async def get_file_by_id(file_id: str):
     return files_col.find_one({"_id": ObjectId(file_id)})
 
+# ✅ NEW: Save a bulk album
+async def save_bulk_file(user_id: int, media_group_id: str, files: list):
+    doc = {
+        "user_id": user_id,
+        "media_group_id": media_group_id,
+        "files": files,
+        "time": datetime.utcnow()
+    }
+    insert = bulk_files_col.insert_one(doc)
+    return str(insert.inserted_id)
+    
+async def get_bulk_file_by_id(ref_id: str):
+    return bulk_files_col.find_one({"_id": ObjectId(ref_id)})
+
 async def set_force_check(value: bool):
     settings_collection.update_one(
         {"_id": "force_check"},
@@ -104,4 +121,3 @@ async def set_main_channel(channel: str):
 async def get_main_channel() -> str:
     data = config_col.find_one({"_id": "main_channel"})
     return data["value"] if data else None
-  
