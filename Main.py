@@ -1,24 +1,26 @@
-import nest_asyncio
-nest_asyncio.apply()
+import os
+import importlib
+from Bot import bot 
 
-import asyncio
-from Bot import bot        # Pyrogram client
-from Bot import app  # Telethon client
+plugin_folder = "Plugins"
 
-async def main():
-    await app.start()
-    await bot.start()
+# Function to load plugins
+def load_plugins():
+    for filename in os.listdir(plugin_folder):
+        if filename.endswith(".py"):
+            importlib.import_module(f"{plugin_folder}.{filename[:-3]}")
 
-    await asyncio.gather(
-        app.run_until_disconnected(),
-        bot.idle()
-    )
+# Initialize function to load plugins and run the bot
+def init():
+    print(">> Bot Starting...")
 
+    # Load plugins
+    load_plugins()
+
+    # Run the bot (Let Pyrogram manage the event loop)
+    bot.run()
+
+# Main entry point
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    try:
-        loop.run_until_complete(main())
-    finally:
-        loop.close()
+    init()  # Run everything without manually con
+trolling the event loop
