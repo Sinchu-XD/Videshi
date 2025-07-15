@@ -3,7 +3,7 @@ nest_asyncio.apply()
 
 import asyncio
 from Bot import bot        # Pyrogram client
-from TelethonBot import app  # Telethon client
+from Bot import app  # Telethon client
 
 async def main():
     await app.start()
