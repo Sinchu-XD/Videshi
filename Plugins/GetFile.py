@@ -51,8 +51,8 @@ async def start_link_restore(client: Client, message: Message):
         for idx, file in enumerate(files, start=1):
             try:
                 original_msg = await bot.get_messages(file["chat_id"], file["message_id"])
-                sent = None
 
+                sent = None
                 if original_msg.document:
                     sent = await bot.send_document(
                         chat_id=message.chat.id,
@@ -86,7 +86,7 @@ async def start_link_restore(client: Client, message: Message):
 
             except Exception as e:
                 print(f"[RESTORE ERROR] File {idx}: {e}")
-                await message.reply_text(f"⚠️ Failed to send file {idx}. {e}")
+                await message.reply_text(f"⚠️ Failed to send file {idx}.")
 
     else:
         try:
@@ -94,19 +94,22 @@ async def start_link_restore(client: Client, message: Message):
             sent = None
 
             if original_msg.document:
-                sent = await message.reply_document(
+                sent = await bot.send_document(
+                    chat_id=message.chat.id,
                     document=original_msg.document.file_id,
                     protect_content=True,
                     reply_markup=join_button
                 )
             elif original_msg.video:
-                sent = await message.reply_video(
+                sent = await bot.send_video(
+                    chat_id=message.chat.id,
                     video=original_msg.video.file_id,
                     protect_content=True,
                     reply_markup=join_button
                 )
             elif original_msg.photo:
-                sent = await message.reply_photo(
+                sent = await bot.send_photo(
+                    chat_id=message.chat.id,
                     photo=original_msg.photo.file_id,
                     protect_content=True,
                     reply_markup=join_button
@@ -119,4 +122,4 @@ async def start_link_restore(client: Client, message: Message):
         except Exception as e:
             print(f"[RESTORE ERROR] Single file: {e}")
             await message.reply_text("⚠️ Failed to send the file.")
-    
+            
