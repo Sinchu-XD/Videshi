@@ -19,12 +19,12 @@ async def check_subscription(client: Client, user_id: int) -> bool:
 
             member = await client.get_chat_member(channel, user_id)
             # Debug output
-            print(f"[DEBUG] Channel: {channel}, User: {user_id}, Status: {member.status}")
+           # print(f"[DEBUG] Channel: {channel}, User: {user_id}, Status: {member.status}")
 
             if member.status in ("left", "kicked"):
                 return False
         except Exception as e:
-            print(f"Error checking subscription for channel {channel}: {e}")
+           # print(f"Error checking subscription for channel {channel}: {e}")
             return False
 
     return True
