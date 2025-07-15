@@ -1,7 +1,7 @@
 from pyrogram import filters
 from pyrogram.types import Message
 from Bot import bot
-from Bot.TelethonClient import telethon_client
+from Bot import app as telethon_client
 from Config import Config
 from Database import get_all_users, get_sudo_list
 from telethon.errors import ChatAdminRequiredError
