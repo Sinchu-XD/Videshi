@@ -1,6 +1,6 @@
 import os
 import importlib
-from Bot import bot 
+from Bot import bot
 
 plugin_folder = "Plugins"
 
