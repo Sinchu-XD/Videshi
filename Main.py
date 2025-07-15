@@ -1,7 +1,7 @@
 import os
 import importlib
 from Bot import bot       # Pyrogram Client
-from TelethonBot import app  # Telethon Client
+from Bot import app  # Telethon Client
 import asyncio
 
 plugin_folder = "Plugins"
