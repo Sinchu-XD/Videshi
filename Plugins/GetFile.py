@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from Config import Config
 from Bot import bot
 from Database import get_file_by_id, get_bulk_file_by_id, add_user
@@ -32,7 +32,11 @@ async def start_link_restore(client: Client, message: Message):
     if not data:
         return await message.reply_text("❌ File not found or invalid link.")
 
-    # Function to auto-delete sent message
+    # Prepare join button
+    join_button = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📢 Join Mega Channel", url="https://t.me/+2J7I2uD7Xuo3M2Fl")]
+    ])
+
     async def auto_delete(sent_msg, delay=600):
         await asyncio.sleep(delay)
         try:
@@ -54,30 +58,30 @@ async def start_link_restore(client: Client, message: Message):
                         chat_id=message.chat.id,
                         document=original_msg.document.file_id,
                         caption=f"📦 File {idx}/{len(files)}",
-                        protect_content=True
+                        protect_content=True,
+                        reply_markup=join_button
                     )
                 elif original_msg.video:
                     sent = await bot.send_video(
                         chat_id=message.chat.id,
                         video=original_msg.video.file_id,
                         caption=f"📦 File {idx}/{len(files)}",
-                        protect_content=True
+                        protect_content=True,
+                        reply_markup=join_button
                     )
                 elif original_msg.photo:
                     sent = await bot.send_photo(
                         chat_id=message.chat.id,
                         photo=original_msg.photo.file_id,
                         caption=f"📦 File {idx}/{len(files)}",
-                        protect_content=True
+                        protect_content=True,
+                        reply_markup=join_button
                     )
                 else:
                     await message.reply_text(f"❌ File {idx} has no valid media.")
                     continue
 
-                # Start auto-delete in background
                 asyncio.create_task(auto_delete(sent, 600))
-
-                # Small pause to avoid FloodWait
                 await asyncio.sleep(1)
 
             except Exception as e:
@@ -85,7 +89,6 @@ async def start_link_restore(client: Client, message: Message):
                 await message.reply_text(f"⚠️ Failed to send file {idx}. {e}")
 
     else:
-        # Single file fallback
         try:
             original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
             sent = None
@@ -93,17 +96,20 @@ async def start_link_restore(client: Client, message: Message):
             if original_msg.document:
                 sent = await message.reply_document(
                     document=original_msg.document.file_id,
-                    protect_content=True
+                    protect_content=True,
+                    reply_markup=join_button
                 )
             elif original_msg.video:
                 sent = await message.reply_video(
                     video=original_msg.video.file_id,
-                    protect_content=True
+                    protect_content=True,
+                    reply_markup=join_button
                 )
             elif original_msg.photo:
                 sent = await message.reply_photo(
                     photo=original_msg.photo.file_id,
-                    protect_content=True
+                    protect_content=True,
+                    reply_markup=join_button
                 )
             else:
                 return await message.reply_text("❌ File not found or invalid media.")
@@ -113,4 +119,4 @@ async def start_link_restore(client: Client, message: Message):
         except Exception as e:
             print(f"[RESTORE ERROR] Single file: {e}")
             await message.reply_text("⚠️ Failed to send the file.")
-            
+    
