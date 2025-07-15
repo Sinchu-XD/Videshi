@@ -46,7 +46,7 @@ async def broadcast_handler(client: Client, message: Message):
 
             done += 1
         except Exception as e:
-            print(f"❌ Failed for {uid}: {e}")
+         #   print(f"❌ Failed for {uid}: {e}")
             failed += 1
 
         await asyncio.sleep(0.1)
