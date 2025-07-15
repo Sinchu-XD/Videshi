@@ -1,8 +1,8 @@
-import asyncio
 import os
 import importlib
 from Bot import bot       # Pyrogram Client
-from Bot import app  # Telethon Client
+from TelethonBot import app  # Telethon Client
+import asyncio
 
 plugin_folder = "Plugins"
 
@@ -17,18 +17,19 @@ async def main():
 
     print(">> Starting clients...")
 
-    # Start Telethon client
     await app.start()
-
-    # Start Pyrogram client (runs forever)
     await bot.start()
 
-    # Wait until both clients disconnect
     await asyncio.gather(
         app.run_until_disconnected(),
-        bot.idle()  # Keeps Pyrogram client running
+        bot.idle()
     )
 
 if __name__ == "__main__":
-    asyncio.run(main())
-    
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    try:
+        loop.run_until_complete(main())
+    finally:
+        loop.close()
