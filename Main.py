@@ -1,22 +1,11 @@
-import os
-import importlib
-from Bot import bot       # Pyrogram Client
-from Bot import app  # Telethon Client
+import nest_asyncio
+nest_asyncio.apply()
+
 import asyncio
-
-plugin_folder = "Plugins"
-
-def load_plugins():
-    for filename in os.listdir(plugin_folder):
-        if filename.endswith(".py"):
-            importlib.import_module(f"{plugin_folder}.{filename[:-3]}")
+from Bot import bot        # Pyrogram client
+from TelethonBot import app  # Telethon client
 
 async def main():
-    print(">> Loading plugins...")
-    load_plugins()
-
-    print(">> Starting clients...")
-
     await app.start()
     await bot.start()
 
