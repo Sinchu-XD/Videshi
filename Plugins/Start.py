@@ -90,7 +90,7 @@ async def start_command(client: Client, message: Message):
             pass
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Main Channel", url="https://t.me/+N-ujk8NAZxE0ZDQx")],
+            [InlineKeyboardButton("Live Show", url="https://t.me/+N-ujk8NAZxE0ZDQx")],
             [InlineKeyboardButton("How To Use Bot", url="https://t.me/StreeUses/3")]
         ])
 
