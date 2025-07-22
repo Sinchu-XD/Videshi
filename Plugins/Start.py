@@ -90,8 +90,8 @@ async def start_command(client: Client, message: Message):
             pass
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Main Channel", url="https://t.me/StreeHub")],
-            [InlineKeyboardButton("How To Use Bot", url="https://t.me/SexyStreeBot/6")]
+            [InlineKeyboardButton("🏠 Main Channel", url="https://t.me/+N-ujk8NAZxE0ZDQx")],
+            [InlineKeyboardButton("How To Use Bot", url="https://t.me/StreeUses/3")]
         ])
 
         if await is_admin(user_id):
