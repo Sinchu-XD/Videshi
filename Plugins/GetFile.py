@@ -34,7 +34,7 @@ async def start_link_restore(client: Client, message: Message):
 
     # Prepare join button
     join_button = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📢 Join Mega Channel", url="https://t.me/+2J7I2uD7Xuo3M2Fl")]
+        [InlineKeyboardButton("📢 Join Mega Channel", url="https://t.me/+N-ujk8NAZxE0ZDQx")]
     ])
 
     async def auto_delete(sent_msg, delay=600):
