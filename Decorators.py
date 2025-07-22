@@ -6,30 +6,27 @@ from Database import get_channels, get_sudo_list, get_main_channel, get_file_by_
 from functools import wraps
 import asyncio
 
-async def check_subscription(client: Client, user_id: int) -> bool:
+# 🔹 Return list of channels the user has NOT joined
+async def check_subscription(client: Client, user_id: int) -> list:
     channels = await get_channels()
     if not channels:
-        return True
+        return []
+
+    not_joined = []
 
     for channel in channels:
         try:
-            # Ensure channel name has @
             if not channel.startswith("@"):
                 channel = f"@{channel}"
-
             member = await client.get_chat_member(channel, user_id)
-            # Debug output
-           # print(f"[DEBUG] Channel: {channel}, User: {user_id}, Status: {member.status}")
-
             if member.status in ("left", "kicked"):
-                return False
-        except Exception as e:
-           # print(f"Error checking subscription for channel {channel}: {e}")
-            return False
+                not_joined.append(channel)
+        except Exception:
+            not_joined.append(channel)
 
-    return True
+    return not_joined
 
-
+# 🔹 Forward file after verification
 async def send_file_by_ref_id(client: Client, chat_id: int, file_ref_id: str):
     data = await get_file_by_id(file_ref_id)
     if not data:
@@ -49,65 +46,60 @@ async def send_file_by_ref_id(client: Client, chat_id: int, file_ref_id: str):
             await sent.delete()
         except Exception as e:
             print(f"Error deleting sent file: {e}")
-            pass
     except Exception as e:
         await client.send_message(chat_id, f"⚠️ Failed to send the file. Error: {e}")
 
-
+# 🔹 Decorator to enforce subscription
 def subscription_required():
     def decorator(func):
         @wraps(func)
         async def wrapper(client: Client, message: Message):
             user_id = message.from_user.id
-            if await check_subscription(client, user_id):
-                return await func(client, message)
+            not_joined = await check_subscription(client, user_id)
 
-            channels = await get_channels()
-            main_channel = await get_main_channel()
-            buttons = [
-                [InlineKeyboardButton(f"📡 Join @{ch}", url=f"https://t.me/{ch}")]
-                for ch in channels
-            ]
+            if not not_joined:
+                return await func(client, message)
 
             file_ref_id = None
             if message.text and message.text.startswith("/start "):
                 file_ref_id = message.text.split(" ", 1)[1]
 
+            buttons = [
+                [InlineKeyboardButton(f"📡 Join {ch}", url=f"https://t.me/{ch.lstrip('@')}")]
+                for ch in not_joined
+            ]
             buttons.append([
                 InlineKeyboardButton("✅ I Joined", callback_data=f"check_join_{file_ref_id or 'none'}")
             ])
 
             await message.reply_text(
-                "📥** Please join all required channels to use this bot**:\n\n वीडियो प्राप्त करने के लिए नीचे दिए हुए तीनो चैनल पे क्लिक करके जुड़ें करो उसके बाद **I JOINED** बटन पर क्लिक करें",
+                "📥 **Please join all required channels to use this bot**:\n\nवीडियो प्राप्त करने के लिए नीचे दिए हुए सभी चैनल में जुड़ें, फिर **I JOINED** दबाएं।",
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
         return wrapper
     return decorator
 
-
+# 🔹 Callback to recheck after "I Joined"
 @bot.on_callback_query(filters.regex(r"check_join_(.+)"))
 async def recheck_subscription(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     data = callback_query.data
     file_ref_id = data.split("_", 2)[2] if "_" in data else None
 
-    main_channel = await get_main_channel()
-    keyboard = []
-    if main_channel:
-        keyboard.append([InlineKeyboardButton("🏠 Main Channel", url=f"https://t.me/{main_channel}")])
+    not_joined = await check_subscription(client, user_id)
 
-    if await check_subscription(client, user_id):
+    if not not_joined:
+        main_channel = await get_main_channel()
+        keyboard = []
+        if main_channel:
+            keyboard.append([InlineKeyboardButton("🏠 Main Channel", url=f"https://t.me/{main_channel}")])
+
         await callback_query.message.edit_text(
             """
-• You're Successfully Verified.
-• Now You Can Use Bot Without Any Interrupt.
-• Please Click On Main Channel For All 18+ Contents.
-• You Get Many Videos There, Only You Have To Click On Link Which One You Want.
+✅ You're successfully verified!
+Now enjoy the content without interruptions.
 
-• आपका सफलतापूर्वक सत्यापन हो गया है।
-• अब आप बिना किसी रुकावट के बॉट का उपयोग कर सकते हैं।
-• कृपया सभी 18+ वीडियो के लिए Main Channel पर क्लिक करें |
-• आपको वहां कई वीडियो मिलेंगे, आपको उस लिंक पर क्लिक करना है जो आप देखना चाहते हैं |
+📢 Click the Main Channel button below to explore more videos.
 👇🏻👇🏻👇🏻
             """,
             reply_markup=InlineKeyboardMarkup(keyboard)
@@ -116,14 +108,18 @@ async def recheck_subscription(client: Client, callback_query: CallbackQuery):
         if file_ref_id and file_ref_id != "none":
             await send_file_by_ref_id(client, callback_query.message.chat.id, file_ref_id)
     else:
-        await callback_query.answer("🚫 You haven't joined all channels yet.", show_alert=True)
+        buttons = [
+            [InlineKeyboardButton(f"📡 Join {ch}", url=f"https://t.me/{ch.lstrip('@')}")]
+            for ch in not_joined
+        ]
+        buttons.append([InlineKeyboardButton("✅ I Joined", callback_data=f"check_join_{file_ref_id or 'none'}")])
 
-    try:
-        await callback_query.message.delete()
-    except Exception as e:
-        print(f"Error deleting callback message: {e}")
+        await callback_query.message.edit_text(
+            "❌ You're still not subscribed to all required channels. Please join them and tap 'I Joined' again.",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
 
-
+# 🔹 (Optional) Message cleaner for later use
 async def delete_messages(user_message: Message, bot_message: Message, delay=5):
     await asyncio.sleep(delay)
     try:
@@ -134,3 +130,4 @@ async def delete_messages(user_message: Message, bot_message: Message, delay=5):
         await bot_message.delete()
     except Exception as e:
         print(f"Error deleting bot message: {e}")
+        
