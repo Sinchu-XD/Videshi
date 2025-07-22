@@ -9,7 +9,7 @@ bot = Client(
 )
 
 from telethon import TelegramClient
-
+"""
 app = TelegramClient(
     "TelethonSession",
     Config.API_ID,
@@ -18,3 +18,4 @@ app = TelegramClient(
 
 # This will keep the Telethon session active
 app.start(bot_token=Config.BOT_TOKEN)
+"""
