@@ -17,7 +17,7 @@ async def broadcast_forward(client, message: Message):
     if not message.reply_to_message or not message.reply_to_message.forward_from_chat:
         return await message.reply("❌ Please reply to a *forwarded* message from your Channel.")
 
-    users = await get_all_users()
+    users = get_all_users()
     total = len(users)
     done = 0
     failed = 0
