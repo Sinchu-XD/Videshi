@@ -96,11 +96,15 @@ async def recheck_subscription(client: Client, callback_query: CallbackQuery):
 
         await callback_query.message.edit_text(
             """
-✅ You're successfully verified!
-Now enjoy the content without interruptions.
+• You're Successfully Verified.
+• Now You Can Use Bot Without Any Interrupt.
+• Please Click On Main Channel For All 18+ Contents.
+• You Get Many Videos There, Only You Have To Click On Link Which One You Want.
 
-📢 Click the Main Channel button below to explore more videos.
-👇🏻👇🏻👇🏻
+• आपका सफलतापूर्वक सत्यापन हो गया है।
+• अब आप बिना किसी रुकावट के बॉट का उपयोग कर सकते हैं।
+• कृपया सभी 18+ वीडियो के लिए Main Channel पर क्लिक करें |
+• आपको वहां कई वीडियो मिलेंगे, आपको उस लिंक पर क्लिक करना है जो आप देखना चाहते हैं |
             """,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
