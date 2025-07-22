@@ -33,7 +33,7 @@ async def broadcast_forward(client, message: Message):
             )
             done += 1
         except Exception as e:
-            print(f"❌ Failed for {uid}: {e}")
+            #print(f"❌ Failed for {uid}: {e}")
             failed += 1
         await asyncio.sleep(0.2)  # Avoid flood limit
 
