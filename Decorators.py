@@ -35,19 +35,38 @@ async def send_file_by_ref_id(client: Client, chat_id: int, file_ref_id: str):
 
     try:
         original_msg = await bot.get_messages(data["chat_id"], data["message_id"])
-        sent = await client.send_document(
-            chat_id,
-            document=original_msg.document if data["file_type"] == "document" else original_msg.video,
-            caption="📂 Sending your video...\n\nThis video will auto-delete in 20 minutes.",
-            protect_content=True
-        )
-        await asyncio.sleep(1200)
+
+        if data["file_type"] == "document" and original_msg.document:
+            file_id = original_msg.document.file_id
+            sent = await client.send_document(
+                chat_id,
+                document=file_id,
+                caption="📂 Sending your document...\n\nThis file will auto-delete in 20 minutes.",
+                protect_content=True
+            )
+
+        elif data["file_type"] == "video" and original_msg.video:
+            file_id = original_msg.video.file_id
+            sent = await client.send_video(
+                chat_id,
+                video=file_id,
+                caption="📽 Sending your video...\n\nThis video will auto-delete in 20 minutes.",
+                protect_content=True
+            )
+
+        else:
+            await client.send_message(chat_id, "❌ File type mismatch or file not found.")
+            return
+
+        await asyncio.sleep(1200)  # 20 minutes = 1200 seconds
         try:
             await sent.delete()
         except Exception as e:
             print(f"Error deleting sent file: {e}")
+
     except Exception as e:
         await client.send_message(chat_id, f"⚠️ Failed to send the file. Error: {e}")
+
 
 # 🔹 Decorator to enforce subscription
 def subscription_required():
