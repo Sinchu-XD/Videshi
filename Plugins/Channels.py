@@ -1,6 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from Bot import bot
+from Config import Config
 from Database import (
     add_channel,
     remove_channel,
@@ -18,11 +19,9 @@ def extract_channel_input(raw: str) -> str:
         raw = raw.replace("t.me/", "")
     return raw
 
-@bot.on_message(filters.command("addchannel") & filters.private)
+@bot.on_message(filters.command("addchannel") & filters.group & filters.user(Config.OWNER_ID))
 async def add_channel_cmd(client: Client, message: Message):
-    if not await owner_or_sudo(message):
-        return
-
+    
     if len(message.command) < 2:
         await message.reply_text("Usage: /addchannel <channel_link or @username>")
         return
@@ -30,12 +29,11 @@ async def add_channel_cmd(client: Client, message: Message):
     ch = extract_channel_input(" ".join(message.command[1:]))
     await add_channel(ch)
     await message.reply_text(f"✅ Added `{ch}` to required channel list.")
+    
 
-@bot.on_message(filters.command("rmchannel") & filters.private)
+@bot.on_message(filters.command("rmchannel") & filters.group & filters.user(Config.OWNER_ID))
 async def remove_channel_cmd(client: Client, message: Message):
-    if not await owner_or_sudo(message):
-        return
-
+    
     if len(message.command) < 2:
         await message.reply_text("Usage: /rmchannel <channel_link or @username>")
         return
@@ -44,11 +42,9 @@ async def remove_channel_cmd(client: Client, message: Message):
     await remove_channel(ch)
     await message.reply_text(f"❌ Removed `{ch}` from required channel list.")
 
-@bot.on_message(filters.command("channelslist") & filters.private)
+@bot.on_message(filters.command("channelslist") & filters.group & filters.user(Config.OWNER_ID))
 async def list_channels_cmd(client: Client, message: Message):
-    if not await owner_or_sudo(message):
-        return
-
+    
     channels = await get_channels()
     if not channels:
         await message.reply_text("📭 No channels saved.")
@@ -57,10 +53,9 @@ async def list_channels_cmd(client: Client, message: Message):
     msg = "**📢 Required Channels:**\n" + "\n".join([f"- `{ch}`" for ch in channels])
     await message.reply_text(msg)
 
-@bot.on_message(filters.command("mainchannel") & filters.private)
+@bot.on_message(filters.command("mainchannel") & filters.group & filters.user(Config.OWNER_ID))
 async def set_or_get_main_channel_cmd(client: Client, message: Message):
-    if not await owner_or_sudo(message):
-        return
+    
 
     if len(message.command) < 2:
         main_ch = await get_main_channel()
