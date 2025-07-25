@@ -99,6 +99,9 @@ def subscription_required():
     return decorator
 
 # 🔹 Callback to recheck after "I Joined"
+from pyrogram.errors import MessageNotModified
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 @bot.on_callback_query(filters.regex(r"check_join_(.+)"))
 async def recheck_subscription(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
@@ -113,8 +116,7 @@ async def recheck_subscription(client: Client, callback_query: CallbackQuery):
         if main_channel:
             keyboard.append([InlineKeyboardButton("🏠 Main Channel", url=f"https://t.me/{main_channel}")])
 
-        await callback_query.message.edit_text(
-            """
+        success_text = """
 • You're Successfully Verified.
 • Now You Can Use Bot Without Any Interrupt.
 • Please Click On Main Channel For All 18+ Contents.
@@ -124,12 +126,20 @@ async def recheck_subscription(client: Client, callback_query: CallbackQuery):
 • अब आप बिना किसी रुकावट के बॉट का उपयोग कर सकते हैं।
 • कृपया सभी 18+ वीडियो के लिए Main Channel पर क्लिक करें |
 • आपको वहां कई वीडियो मिलेंगे, आपको उस लिंक पर क्लिक करना है जो आप देखना चाहते हैं |
-            """,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        """
+
+        try:
+            if callback_query.message.text != success_text.strip():
+                await callback_query.message.edit_text(
+                    success_text.strip(),
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+        except MessageNotModified:
+            pass  # Already same, no need to edit
 
         if file_ref_id and file_ref_id != "none":
             await send_file_by_ref_id(client, callback_query.message.chat.id, file_ref_id)
+
     else:
         buttons = [
             [InlineKeyboardButton(f"📡 Join {ch}", url=f"https://t.me/{ch.lstrip('@')}")]
@@ -137,10 +147,13 @@ async def recheck_subscription(client: Client, callback_query: CallbackQuery):
         ]
         buttons.append([InlineKeyboardButton("✅ I Joined", callback_data=f"check_join_{file_ref_id or 'none'}")])
 
-        await callback_query.message.edit_text(
-            "❌ You're still not subscribed to all required channels. Please join them and tap 'I Joined' again.",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
+        try:
+            await callback_query.message.edit_text(
+                "❌ You're still not subscribed to all required channels. Please join them and tap 'I Joined' again.",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        except MessageNotModified:
+            pass  # No need to re-edit
 
 # 🔹 (Optional) Message cleaner for later use
 async def delete_messages(user_message: Message, bot_message: Message, delay=5):
